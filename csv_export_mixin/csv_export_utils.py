@@ -5,7 +5,7 @@ from datetime import datetime
 from django.db import connection
 from django.http import StreamingHttpResponse
 
-logger = logging.getLogger("requests")
+logger = logging.getLogger(__name__)
 
 
 def sanitize_log_input(text):
@@ -119,7 +119,10 @@ def stream_csv_response(filename, headers, queryset, row_generator_fn, chunk_siz
 
     # Log the start of CSV generation with key metrics
     logger.info(
-        "Starting CSV generation - Records: %d, Fields: %d, Chunk size: %d", record_count, len(safe_headers), chunk_size
+        "Starting CSV generation - Records: %d, Fields: %d, Chunk size: %d",
+        record_count,
+        len(safe_headers),
+        chunk_size,
     )
 
     def row_generator():
@@ -156,7 +159,9 @@ def stream_csv_response(filename, headers, queryset, row_generator_fn, chunk_siz
                     safe_pk = sanitize_log_input(str(getattr(obj, "pk", "unknown")))
                     safe_error = sanitize_log_input(str(e))
 
-                    logger.error("Error processing row for object %s: %s", safe_pk, safe_error)
+                    logger.error(
+                        "Error processing row for object %s: %s", safe_pk, safe_error
+                    )
                     continue
 
         except Exception as e:
@@ -167,7 +172,11 @@ def stream_csv_response(filename, headers, queryset, row_generator_fn, chunk_siz
 
         finally:
             # Log completion with final stats
-            logger.info("CSV generation completed - Processed: %d/%d records", processed_count, record_count)
+            logger.info(
+                "CSV generation completed - Processed: %d/%d records",
+                processed_count,
+                record_count,
+            )
             # Close DB connection explicitly to prevent connection leaks
             connection.close()
 
@@ -186,7 +195,8 @@ def stream_csv_response(filename, headers, queryset, row_generator_fn, chunk_siz
         # Create streaming response with CSV data
         # Use UTF-8 with BOM for Excel compatibility
         response = StreamingHttpResponse(
-            (writer.writerow(row) for row in row_generator()), content_type="text/csv; charset=utf-8-sig"
+            (writer.writerow(row) for row in row_generator()),
+            content_type="text/csv; charset=utf-8-sig",
         )
         # Set download headers
         response["Content-Disposition"] = f'attachment; filename="{filename}"'
