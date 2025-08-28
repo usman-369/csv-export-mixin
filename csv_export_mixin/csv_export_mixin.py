@@ -1,13 +1,14 @@
-import logging
 from django.urls import path
 from django.contrib import admin
 from django.contrib import messages
 from django.utils.html import strip_tags
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 
-from .csv_export_utils import stream_csv_response, sanitize_log_input
-
-logger = logging.getLogger("requests")
+from .csv_export_utils import (
+    logger,
+    sanitize_log_input,
+    stream_csv_response,
+)
 
 
 class CSVExportMixin:
