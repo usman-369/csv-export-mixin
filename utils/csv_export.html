@@ -1,0 +1,123 @@
+{% extends "admin/change_list.html" %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<style>
+    /* Ensure modal displays properly without filter interference */
+    .wrapper,
+    .modal-backdrop,
+    body.modal-open {
+        filter: none !important;
+        backdrop-filter: none !important;
+    }
+
+    .modal-content {
+        filter: none !important;
+        backdrop-filter: none !important;
+        background-color: #fff !important;
+    }
+
+    .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    /* Scrollable field selection container */
+    .export-fields-container {
+        max-height: 300px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        padding: 10px;
+        margin-top: 10px;
+    }
+
+    /* Field grouping styles for organized display */
+    .field-group {
+        margin-bottom: 15px;
+    }
+
+    .field-group h6 {
+        color: #666;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+        margin-bottom: 10px;
+    }
+</style>
+
+<!-- Include the CSV export JavaScript -->
+<script src="{% static 'js/csv_export.js' %}"></script>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+
+<!-- CSV Export Field Selection Modal -->
+<div class="modal fade" id="exportModal" tabindex="-1" aria-labelledby="exportModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form id="csvExportForm" method="post" action="{% url 'admin:'|add:opts.model_name|add:'_csv_export_view' %}">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-weight-bold" id="exportModalLabel">Select Fields to Export</h5>
+                </div>
+
+                <div class="modal-body">
+                    <!-- Select All Fields Option -->
+                    <div class="form-check mb-3">
+                        <input class="form-check-input" type="checkbox" id="selectAllFields">
+                        <label class="form-check-label font-weight-bold" for="selectAllFields">
+                            Select All Fields
+                        </label>
+                    </div>
+
+                    <!-- Field Selection Container -->
+                    <div class="export-fields-container">
+                        <!-- Section heading for all cases -->
+                        <div class="field-group">
+                            <h6>Available Fields</h6>
+
+                            {% if csv_export_field_choices %}
+                            <!-- Use configured export fields from CSVExportMixin -->
+                            {% for field_name, display_name in csv_export_field_choices %}
+                            <div class="form-check">
+                                <input class="form-check-input export-field" type="checkbox" name="selected_fields"
+                                    value="{{ field_name }}" id="field_{{ field_name }}">
+                                <label class="form-check-label" for="field_{{ field_name }}">
+                                    {{ display_name }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                            {% else %}
+                            <!-- Fallback: Use admin list_display fields if no export fields configured -->
+                            <div class="field-group">
+                                <h6>Available Fields</h6>
+                                {% for field in cl.list_display %}
+                                {% if field != "action_checkbox" %}
+                                <div class="form-check">
+                                    <input class="form-check-input export-field" type="checkbox" name="selected_fields"
+                                        value="{{ field }}" id="field_{{ field }}">
+                                    <label class="form-check-label" for="field_{{ field }}">
+                                        {{ field|capfirst }}
+                                    </label>
+                                </div>
+                                {% endif %}
+                                {% endfor %}
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <!-- Hidden fields to track export scope and selected records -->
+                        <input type="hidden" name="select_across" id="selectAcross" value="0">
+                        <input type="hidden" name="selected_ids" id="selectedIds">
+
+                        <!-- Modal Actions -->
+                        <button type="submit" class="btn btn-primary">Export CSV</button>
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    </div>
+                </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
